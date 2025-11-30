@@ -7,8 +7,9 @@ A minimal but complete plugin template. Copy and modify to create your own plugi
 ```
 template/
 ├── entry.go        # Entry implementation and registration
+├── factory.go      # Plugin factory (embed config, create instances)
 ├── plugin.go       # Plugin business logic
-├── config.yaml     # Default config (embedded)
+├── config.yaml     # Default config (embedded via go:embed)
 └── config/
     └── config.go   # Config structure
 ```
