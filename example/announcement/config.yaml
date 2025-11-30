@@ -1,0 +1,24 @@
+# Announcement monitor plugin example config
+plugin:
+  enabled: true
+  log_level: info
+
+announcement:
+  sources:
+    - name: "Official Announcements"
+      url: "https://example.com/api/announcements"
+      interval: 300  # Poll every 5 minutes
+    - name: "Community Announcements"
+      url: "https://community.example.com/api/announcements"
+      interval: 600  # Poll every 10 minutes
+
+  notifications:
+    - type: "webhook"
+      url: "https://your-webhook-url/notify"
+
+  filters:
+    keywords:
+      - "important"
+      - "urgent"
+      - "maintenance"
+      - "upgrade"

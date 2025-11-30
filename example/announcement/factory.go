@@ -1,0 +1,98 @@
+package announcement
+
+import (
+	_ "embed"
+	"fmt"
+
+	"plugGo"
+	plugGoConfig "plugGo/config"
+	"plugGo/example/announcement/config"
+	"plugGo/registry"
+)
+
+//go:embed config.yaml
+var defaultConfigData []byte
+
+// Factory is the announcement plugin factory.
+type Factory struct{}
+
+// NewFactory creates a plugin factory instance.
+func NewFactory() *Factory {
+	return &Factory{}
+}
+
+// Name returns the plugin type name.
+func (f *Factory) Name() string {
+	return "announcement"
+}
+
+// Version returns the plugin version.
+func (f *Factory) Version() string {
+	return "1.0.0"
+}
+
+// DefaultConfig returns the default config.
+func (f *Factory) DefaultConfig() interface{} {
+	cfg := &config.Config{}
+
+	// Load default config from embedded config file
+	loader := &plugGoConfig.Loader{}
+	if err := loader.LoadWithFallback(f.Name(), defaultConfigData, cfg); err != nil {
+		// If loading fails, return empty config
+		return &config.Config{}
+	}
+
+	return cfg
+}
+
+// ValidateConfig validates the config.
+func (f *Factory) ValidateConfig(cfg interface{}) error {
+	announcementCfg, ok := cfg.(*config.Config)
+	if !ok {
+		return fmt.Errorf("invalid config type: expected *config.Config, got %T", cfg)
+	}
+
+	// Validate announcement sources are configured
+	if len(announcementCfg.Sources) == 0 {
+		return fmt.Errorf("no announcement sources configured")
+	}
+
+	// Validate each announcement source config
+	for i, source := range announcementCfg.Sources {
+		if source.Name == "" {
+			return fmt.Errorf("source[%d]: name is required", i)
+		}
+		if source.URL == "" {
+			return fmt.Errorf("source[%d]: url is required", i)
+		}
+		if source.Interval <= 0 {
+			return fmt.Errorf("source[%d]: interval must be positive", i)
+		}
+	}
+
+	return nil
+}
+
+// Create creates a plugin instance.
+func (f *Factory) Create(instanceID string, cfg interface{}, logger plugGo.Logger) (plugGo.Plugin, error) {
+	announcementCfg, ok := cfg.(*config.Config)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type: expected *config.Config, got %T", cfg)
+	}
+
+	// Create plugin instance
+	plugin := &Plugin{
+		id:         instanceID,
+		pluginType: f.Name(),
+		version:    f.Version(),
+		cfg:        announcementCfg,
+		logger:     logger,
+	}
+
+	return plugin, nil
+}
+
+// Auto-register plugin factory in init.
+func init() {
+	registry.RegisterFactory(NewFactory())
+}

@@ -1,0 +1,42 @@
+# PlugGo Boot Configuration File
+# Inspired by rk-boot design, unified management of all plugin configs
+
+# Announcement monitor plugin config
+# Supports multi-instance, each instance has independent config
+announcement:
+  - name: "official"
+    enabled: true
+    logLevel: "info"
+    sources:
+      - name: "Official Announcements"
+        url: "https://example.com/api/announcements"
+        interval: 300  # Poll every 5 minutes
+    notifications:
+      - type: "webhook"
+        url: "https://your-webhook-url/notify"
+    filters:
+      keywords:
+        - "important"
+        - "urgent"
+        - "maintenance"
+
+  - name: "community"
+    enabled: true
+    logLevel: "debug"
+    sources:
+      - name: "Community Announcements"
+        url: "https://community.example.com/api/announcements"
+        interval: 600  # Poll every 10 minutes
+    notifications:
+      - type: "webhook"
+        url: "https://your-webhook-url/community-notify"
+    filters:
+      keywords:
+        - "update"
+        - "event"
+
+# More plugins can be added in the future
+# other_plugin:
+#   - name: "instance1"
+#     enabled: true
+#     ...
