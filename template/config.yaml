@@ -1,0 +1,8 @@
+# Plugin default configuration
+# This file is embedded via go:embed
+
+name: "default"
+enabled: true
+logLevel: "info"
+interval: 60
+endpoint: "https://api.example.com"
