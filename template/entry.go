@@ -101,23 +101,18 @@ func (e *TemplateEntry) Reload(newCfg *config.Config) error {
 func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
 	result := make(map[string]plugGo.Entry)
 
-	// Change "template" to your plugin config key
-	if !plugGoConfig.HasYAMLSection(raw, "template") {
+	if !plugGoConfig.HasYAMLSection(raw, PluginName) {
 		return result
 	}
 
-	type bootConfig struct {
-		Entries []config.Config `yaml:"template"`
-	}
-
-	var cfg bootConfig
-	if err := plugGoConfig.UnmarshalYAML(raw, &cfg); err != nil {
-		fmt.Printf("[TemplateEntry] Config parse error: %v\n", err)
+	var entries []config.Config
+	if err := plugGoConfig.UnmarshalYAMLSection(raw, PluginName, &entries); err != nil {
+		fmt.Printf("[%s] Config parse error: %v\n", EntryTypeName, err)
 		return result
 	}
 
-	for i := range cfg.Entries {
-		entryCfg := &cfg.Entries[i]
+	for i := range entries {
+		entryCfg := &entries[i]
 		name := entryCfg.Name
 
 		if name == "" {
@@ -125,7 +120,7 @@ func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
 		}
 
 		if _, exists := result[name]; exists {
-			fmt.Printf("[TemplateEntry] Duplicate name: %s, skipping\n", name)
+			fmt.Printf("[%s] Duplicate name: %s, skipping\n", EntryTypeName, name)
 			continue
 		}
 
@@ -141,14 +136,14 @@ func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
 		}
 
 		logger := plugGo.NewStandardLogger(
-			fmt.Sprintf("template-%s", name),
+			fmt.Sprintf(LoggerPrefix, name),
 			level,
 		)
 
 		entry := &TemplateEntry{
 			name:        name,
-			entryType:   "TemplateEntry",
-			description: fmt.Sprintf("Template plugin [%s]", name),
+			entryType:   EntryTypeName,
+			description: fmt.Sprintf(PluginDescription, name),
 			cfg:         entryCfg,
 			logger:      logger,
 			enabled:     entryCfg.Enabled,

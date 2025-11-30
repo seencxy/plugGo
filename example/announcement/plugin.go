@@ -13,7 +13,6 @@ import (
 type Plugin struct {
 	id         string         // Instance unique identifier
 	pluginType string         // Plugin type name
-	version    string         // Plugin version
 	cfg        *config.Config // Current config
 	logger     plugGo.Logger  // Logger
 	monitor    *Monitor       // Monitor
@@ -32,7 +31,7 @@ func (p *Plugin) PluginType() string {
 
 // Version returns the plugin version.
 func (p *Plugin) Version() string {
-	return p.version
+	return PluginVersion
 }
 
 // Start starts the plugin.

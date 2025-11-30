@@ -23,12 +23,12 @@ func NewFactory() *Factory {
 
 // Name returns the plugin type name.
 func (f *Factory) Name() string {
-	return "template"
+	return PluginName
 }
 
 // Version returns the plugin version.
 func (f *Factory) Version() string {
-	return "1.0.0"
+	return PluginVersion
 }
 
 // DefaultConfig returns the default config.
@@ -76,7 +76,7 @@ func (f *Factory) Create(id string, cfg interface{}, logger plugGo.Logger) (plug
 	}
 
 	if logger == nil {
-		logger = plugGo.NewStandardLogger("template-"+id, plugGo.InfoLevel)
+		logger = plugGo.NewStandardLogger(fmt.Sprintf(LoggerPrefix, id), plugGo.InfoLevel)
 	}
 
 	return NewPlugin(id, c, logger), nil

@@ -23,12 +23,12 @@ func NewFactory() *Factory {
 
 // Name returns the plugin type name.
 func (f *Factory) Name() string {
-	return "announcement"
+	return PluginName
 }
 
 // Version returns the plugin version.
 func (f *Factory) Version() string {
-	return "1.0.0"
+	return PluginVersion
 }
 
 // DefaultConfig returns the default config.
@@ -83,8 +83,7 @@ func (f *Factory) Create(instanceID string, cfg interface{}, logger plugGo.Logge
 	// Create plugin instance
 	plugin := &Plugin{
 		id:         instanceID,
-		pluginType: f.Name(),
-		version:    f.Version(),
+		pluginType: PluginName,
 		cfg:        announcementCfg,
 		logger:     logger,
 	}

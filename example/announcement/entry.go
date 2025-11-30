@@ -26,8 +26,8 @@ type AnnouncementEntry struct {
 func NewAnnouncementEntry(name string, cfg *config.Config, logger plugGo.Logger) *AnnouncementEntry {
 	return &AnnouncementEntry{
 		name:        name,
-		entryType:   "AnnouncementEntry",
-		description: fmt.Sprintf("Announcement monitor entry [%s]", name),
+		entryType:   EntryTypeName,
+		description: fmt.Sprintf(PluginDescription, name),
 		cfg:         cfg,
 		logger:      logger,
 	}
@@ -147,29 +147,25 @@ func (e *AnnouncementEntry) Reload(newCfg *config.Config) error {
 func RegisterAnnouncementEntry(raw []byte) map[string]plugGo.Entry {
 	result := make(map[string]plugGo.Entry)
 
-	// Check if config has announcement section
-	if !plugGoConfig.HasYAMLSection(raw, "announcement") {
+	// Check if config has plugin section
+	if !plugGoConfig.HasYAMLSection(raw, PluginName) {
 		return result
 	}
 
 	// Parse config
-	type bootConfig struct {
-		Announcement []config.Config `yaml:"announcement"`
-	}
-
-	var cfg bootConfig
-	if err := plugGoConfig.UnmarshalYAML(raw, &cfg); err != nil {
+	var entries []config.Config
+	if err := plugGoConfig.UnmarshalYAMLSection(raw, PluginName, &entries); err != nil {
 		return result
 	}
 
 	// Multi-instance: create independent Entry for each config item
-	for i := range cfg.Announcement {
-		entryCfg := &cfg.Announcement[i]
+	for i := range entries {
+		entryCfg := &entries[i]
 
 		// Instance name: prefer name from config, otherwise auto-generate
 		name := entryCfg.Name
 		if name == "" {
-			name = fmt.Sprintf("announcement-%d", i)
+			name = fmt.Sprintf("%s-%d", PluginName, i)
 		}
 
 		// Check name uniqueness
@@ -179,7 +175,7 @@ func RegisterAnnouncementEntry(raw []byte) map[string]plugGo.Entry {
 		}
 
 		// Create independent logger for each instance
-		logger := plugGo.NewDefaultLogger(fmt.Sprintf("announcement-%s", name))
+		logger := plugGo.NewDefaultLogger(fmt.Sprintf(LoggerPrefix, name))
 
 		// Create Entry instance
 		entry := NewAnnouncementEntry(name, entryCfg, logger)

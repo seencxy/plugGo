@@ -12,7 +12,6 @@ import (
 type Plugin struct {
 	id         string
 	pluginType string
-	version    string
 	cfg        *config.Config
 	logger     plugGo.Logger
 	running    bool
@@ -24,8 +23,7 @@ type Plugin struct {
 func NewPlugin(id string, cfg *config.Config, logger plugGo.Logger) *Plugin {
 	return &Plugin{
 		id:         id,
-		pluginType: "template",
-		version:    "1.0.0",
+		pluginType: PluginName,
 		cfg:        cfg,
 		logger:     logger,
 		stopCh:     make(chan struct{}),
@@ -44,7 +42,7 @@ func (p *Plugin) PluginType() string {
 
 // Version returns the plugin version.
 func (p *Plugin) Version() string {
-	return p.version
+	return PluginVersion
 }
 
 // Start starts the plugin.
