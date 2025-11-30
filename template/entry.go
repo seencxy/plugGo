@@ -10,9 +10,9 @@ import (
 	"github.com/seencxy/plugGo/template/config"
 )
 
-// TemplateEntry is the plugin Entry.
+// Entry is the plugin Entry.
 // Implements plugGo.Entry interface, managed by Boot bootstrapper.
-type TemplateEntry struct {
+type Entry struct {
 	name        string
 	entryType   string
 	description string
@@ -24,7 +24,7 @@ type TemplateEntry struct {
 }
 
 // Bootstrap starts the entry.
-func (e *TemplateEntry) Bootstrap(ctx context.Context) {
+func (e *Entry) Bootstrap(ctx context.Context) {
 	if !e.enabled {
 		e.logger.Info(fmt.Sprintf("[%s] Entry disabled, skipping", e.name))
 		return
@@ -43,7 +43,7 @@ func (e *TemplateEntry) Bootstrap(ctx context.Context) {
 }
 
 // Interrupt stops the entry.
-func (e *TemplateEntry) Interrupt(ctx context.Context) {
+func (e *Entry) Interrupt(ctx context.Context) {
 	if !e.enabled || e.plugin == nil {
 		return
 	}
@@ -58,34 +58,34 @@ func (e *TemplateEntry) Interrupt(ctx context.Context) {
 }
 
 // GetName returns the instance name.
-func (e *TemplateEntry) GetName() string {
+func (e *Entry) GetName() string {
 	return e.name
 }
 
 // GetType returns the entry type.
-func (e *TemplateEntry) GetType() string {
+func (e *Entry) GetType() string {
 	return e.entryType
 }
 
 // GetDescription returns the description.
-func (e *TemplateEntry) GetDescription() string {
+func (e *Entry) GetDescription() string {
 	return e.description
 }
 
 // String returns string representation.
-func (e *TemplateEntry) String() string {
-	return fmt.Sprintf("TemplateEntry{name=%s, enabled=%v}", e.name, e.enabled)
+func (e *Entry) String() string {
+	return fmt.Sprintf("Entry{name=%s, enabled=%v}", e.name, e.enabled)
 }
 
 // GetConfig returns current config.
-func (e *TemplateEntry) GetConfig() *config.Config {
+func (e *Entry) GetConfig() *config.Config {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.cfg
 }
 
 // Reload reloads with new config.
-func (e *TemplateEntry) Reload(newCfg *config.Config) error {
+func (e *Entry) Reload(newCfg *config.Config) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -96,9 +96,9 @@ func (e *TemplateEntry) Reload(newCfg *config.Config) error {
 	return nil
 }
 
-// RegisterTemplateEntry creates Entry instances from boot.yaml.
+// RegisterEntry creates Entry instances from boot.yaml.
 // Supports multi-instance: each array element creates one instance.
-func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
+func RegisterEntry(raw []byte) map[string]plugGo.Entry {
 	result := make(map[string]plugGo.Entry)
 
 	if !plugGoConfig.HasYAMLSection(raw, PluginName) {
@@ -140,7 +140,7 @@ func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
 			level,
 		)
 
-		entry := &TemplateEntry{
+		entry := &Entry{
 			name:        name,
 			entryType:   EntryTypeName,
 			description: fmt.Sprintf(PluginDescription, name),
@@ -158,5 +158,5 @@ func RegisterTemplateEntry(raw []byte) map[string]plugGo.Entry {
 
 // Auto-register on import
 func init() {
-	plugGo.RegisterPluginEntryRegFunc(RegisterTemplateEntry)
+	plugGo.RegisterPluginEntryRegFunc(RegisterEntry)
 }
