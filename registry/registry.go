@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"plugGo"
+	"github.com/seencxy/plugGo"
 )
 
 // Registry is the plugin registry.

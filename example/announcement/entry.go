@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"plugGo"
-	plugGoConfig "plugGo/config"
-	"plugGo/example/announcement/config"
+	"github.com/seencxy/plugGo"
+	plugGoConfig "github.com/seencxy/plugGo/config"
+	"github.com/seencxy/plugGo/example/announcement/config"
 )
 
 // AnnouncementEntry is the announcement monitor Entry.

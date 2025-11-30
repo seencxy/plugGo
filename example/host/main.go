@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"plugGo"
+	"github.com/seencxy/plugGo"
 
 	// Import all plugins (triggers init to auto-register Entry registration functions)
-	_ "plugGo/example/announcement"
+	_ "github.com/seencxy/plugGo/example/announcement"
 )
 
 func main() {

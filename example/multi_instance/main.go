@@ -7,12 +7,12 @@ import (
 	"syscall"
 	"time"
 
-	"plugGo"
-	announcementConfig "plugGo/example/announcement/config"
-	"plugGo/registry"
+	"github.com/seencxy/plugGo"
+	announcementConfig "github.com/seencxy/plugGo/example/announcement/config"
+	"github.com/seencxy/plugGo/registry"
 
 	// Import plugin factory (triggers init auto-registration)
-	_ "plugGo/example/announcement"
+	_ "github.com/seencxy/plugGo/example/announcement"
 )
 
 func main() {

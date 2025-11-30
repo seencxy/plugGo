@@ -4,10 +4,10 @@ import (
 	_ "embed"
 	"fmt"
 
-	"plugGo"
-	plugGoConfig "plugGo/config"
-	"plugGo/example/announcement/config"
-	"plugGo/registry"
+	"github.com/seencxy/plugGo"
+	plugGoConfig "github.com/seencxy/plugGo/config"
+	"github.com/seencxy/plugGo/example/announcement/config"
+	"github.com/seencxy/plugGo/registry"
 )
 
 //go:embed config.yaml

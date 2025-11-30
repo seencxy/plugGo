@@ -1,4 +1,4 @@
-module plugGo
+module github.com/seencxy/plugGo
 
 go 1.25.4
 

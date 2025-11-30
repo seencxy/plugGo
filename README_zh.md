@@ -18,7 +18,7 @@ PlugGo 是一个轻量级的 Go 插件框架，参考 [rk-boot](https://github.c
 ### 1. 安装框架
 
 ```bash
-go get plugGo
+go get github.com/seencxy/plugGo
 ```
 
 ### 2. 创建 boot.yaml
@@ -45,10 +45,10 @@ package main
 
 import (
     "context"
-    "plugGo"
+    "github.com/seencxy/plugGo"
     
     // 导入插件（触发 init 自动注册）
-    _ "plugGo/example/announcement"
+    _ "github.com/seencxy/plugGo/example/announcement"
 )
 
 func main() {
@@ -175,8 +175,8 @@ package myplugin
 
 import (
     "context"
-    "plugGo"
-    plugGoConfig "plugGo/config"
+    "github.com/seencxy/plugGo"
+    plugGoConfig "github.com/seencxy/plugGo/config"
 )
 
 type MyEntry struct {

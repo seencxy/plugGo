@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"plugGo"
-	"plugGo/example/announcement/config"
+	"github.com/seencxy/plugGo"
+	"github.com/seencxy/plugGo/example/announcement/config"
 )
 
 // Monitor is the announcement monitor.

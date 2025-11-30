@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"plugGo"
-	"plugGo/example/announcement/config"
+	"github.com/seencxy/plugGo"
+	"github.com/seencxy/plugGo/example/announcement/config"
 )
 
 // Plugin is the announcement monitor plugin.

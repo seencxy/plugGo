@@ -18,7 +18,7 @@ A lightweight Go plugin framework inspired by [rk-boot](https://github.com/rooki
 ### 1. Install
 
 ```bash
-go get plugGo
+go get github.com/seencxy/plugGo
 ```
 
 ### 2. Create boot.yaml
@@ -45,10 +45,10 @@ package main
 
 import (
     "context"
-    "plugGo"
+    "github.com/seencxy/plugGo"
     
     // Import plugins (triggers init auto-registration)
-    _ "plugGo/example/announcement"
+    _ "github.com/seencxy/plugGo/example/announcement"
 )
 
 func main() {
@@ -175,8 +175,8 @@ package myplugin
 
 import (
     "context"
-    "plugGo"
-    plugGoConfig "plugGo/config"
+    "github.com/seencxy/plugGo"
+    plugGoConfig "github.com/seencxy/plugGo/config"
 )
 
 type MyEntry struct {
