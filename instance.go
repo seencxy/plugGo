@@ -94,3 +94,13 @@ func (pi *PluginInstance) GetLogger() Logger {
 func (pi *PluginInstance) SetLogger(logger Logger) {
 	pi.plugin.SetLogger(logger)
 }
+
+// Status returns the current plugin status.
+func (pi *PluginInstance) Status() PluginStatus {
+	return pi.plugin.Status()
+}
+
+// StatusNotify returns a read-only channel for receiving status change events.
+func (pi *PluginInstance) StatusNotify() <-chan StatusEvent {
+	return pi.plugin.StatusNotify()
+}

@@ -11,12 +11,14 @@ import (
 // Plugin is the announcement monitor plugin.
 // Plugin instance only handles business logic, config management is handled by factory and framework.
 type Plugin struct {
-	id         string         // Instance unique identifier
-	pluginType string         // Plugin type name
-	cfg        *config.Config // Current config
-	logger     plugGo.Logger  // Logger
-	monitor    *Monitor       // Monitor
-	mu         sync.RWMutex   // Protects concurrent access
+	id         string                  // Instance unique identifier
+	pluginType string                  // Plugin type name
+	cfg        *config.Config          // Current config
+	logger     plugGo.Logger           // Logger
+	monitor    *Monitor                // Monitor
+	status     plugGo.PluginStatus     // Current status
+	statusCh   chan plugGo.StatusEvent // Status notification channel
+	mu         sync.RWMutex            // Protects concurrent access
 }
 
 // ID returns the plugin instance ID.
@@ -34,6 +36,33 @@ func (p *Plugin) Version() string {
 	return PluginVersion
 }
 
+// Status returns the current plugin status.
+func (p *Plugin) Status() plugGo.PluginStatus {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.status
+}
+
+// StatusNotify returns a read-only channel for receiving status change events.
+func (p *Plugin) StatusNotify() <-chan plugGo.StatusEvent {
+	return p.statusCh
+}
+
+// updateStatus updates the plugin status and sends notification.
+// Note: caller must hold the lock (p.mu).
+func (p *Plugin) updateStatus(newStatus plugGo.PluginStatus, err error) {
+	if p.status != newStatus {
+		p.status = newStatus
+		// Send status event non-blocking
+		select {
+		case p.statusCh <- plugGo.StatusEvent{Status: newStatus, Error: err}:
+		default:
+			// Channel full, skip this event
+			p.logger.Warn("Status channel full, event dropped")
+		}
+	}
+}
+
 // Start starts the plugin.
 func (p *Plugin) Start() error {
 	p.mu.Lock()
@@ -48,9 +77,11 @@ func (p *Plugin) Start() error {
 	p.monitor = NewMonitor(p.cfg, p.logger)
 	if err := p.monitor.Start(); err != nil {
 		p.logger.Error("Failed to start monitor:", err)
+		p.updateStatus(plugGo.StatusError, err)
 		return fmt.Errorf("failed to start monitor: %w", err)
 	}
 
+	p.updateStatus(plugGo.StatusRunning, nil)
 	p.logger.Info("Plugin started successfully")
 	return nil
 }
@@ -63,11 +94,13 @@ func (p *Plugin) Stop() error {
 	if p.monitor != nil {
 		if err := p.monitor.Stop(); err != nil {
 			p.logger.Error("Failed to stop monitor:", err)
+			p.updateStatus(plugGo.StatusError, err)
 			return fmt.Errorf("failed to stop monitor: %w", err)
 		}
 		p.monitor = nil
 	}
 
+	p.updateStatus(plugGo.StatusStopped, nil)
 	p.logger.Info("Plugin stopped")
 	return nil
 }
@@ -98,7 +131,9 @@ func (p *Plugin) Reload(newConfig interface{}) error {
 	// Type assertion
 	cfg, ok := newConfig.(*config.Config)
 	if !ok {
-		return fmt.Errorf("invalid config type: expected *config.Config, got %T", newConfig)
+		err := fmt.Errorf("invalid config type: expected *config.Config, got %T", newConfig)
+		p.updateStatus(plugGo.StatusError, err)
+		return err
 	}
 
 	// Check if plugin is running
@@ -109,12 +144,14 @@ func (p *Plugin) Reload(newConfig interface{}) error {
 		p.logger.Info("Stopping monitor for config reload")
 		if err := p.monitor.Stop(); err != nil {
 			p.logger.Error("Failed to stop monitor during reload:", err)
+			p.updateStatus(plugGo.StatusError, err)
 			return fmt.Errorf("failed to stop monitor: %w", err)
 		}
 	}
 
 	// Save old config for rollback
 	oldCfg := p.cfg
+	oldStatus := p.status
 	p.cfg = cfg
 
 	// If was running and new config enables plugin, restart Monitor with new config
@@ -127,10 +164,17 @@ func (p *Plugin) Reload(newConfig interface{}) error {
 			p.cfg = oldCfg
 			p.monitor = NewMonitor(p.cfg, p.logger)
 			_ = p.monitor.Start()
+			p.updateStatus(plugGo.StatusError, err)
 			return fmt.Errorf("failed to restart monitor: %w", err)
 		}
+		// Restore running status if was running before
+		p.updateStatus(plugGo.StatusRunning, nil)
 	} else {
 		p.monitor = nil
+		// Update status based on previous state
+		if oldStatus == plugGo.StatusRunning {
+			p.updateStatus(plugGo.StatusStopped, nil)
+		}
 	}
 
 	p.logger.Info("Configuration reloaded successfully")
