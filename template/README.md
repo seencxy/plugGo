@@ -60,9 +60,28 @@ type Config struct {
 ### 5. Implement your logic
 
 Edit `plugin.go`:
-- `Start()` - startup logic
-- `Stop()` - cleanup logic
-- `Reload()` - config hot-reload
+- `Start()` - startup logic (remember to call `updateStatus(plugGo.StatusRunning, nil)` on success)
+- `Stop()` - cleanup logic (remember to call `updateStatus(plugGo.StatusStopped, nil)`)
+- `Reload()` - config hot-reload (update status on errors)
+
+**Status Management**: The plugin automatically tracks status changes:
+- `StatusIdle` - initial state after creation
+- `StatusRunning` - after successful Start()
+- `StatusStopped` - after successful Stop()
+- `StatusError` - when operations fail
+
+Access status via:
+```go
+// Get current status
+status := plugin.Status()
+
+// Subscribe to status changes
+go func() {
+    for event := range plugin.StatusNotify() {
+        log.Printf("Status: %s, Error: %v", event.Status, event.Error)
+    }
+}()
+```
 
 ### 6. Configure boot.yaml
 

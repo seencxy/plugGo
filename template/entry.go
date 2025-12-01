@@ -96,6 +96,38 @@ func (e *Entry) Reload(newCfg *config.Config) error {
 	return nil
 }
 
+// GetPlugin returns the underlying plugin instance.
+// Returns nil if plugin hasn't been created yet.
+func (e *Entry) GetPlugin() *Plugin {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.plugin
+}
+
+// Status returns the current plugin status.
+// Returns StatusIdle if plugin hasn't been created yet.
+func (e *Entry) Status() plugGo.PluginStatus {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	if e.plugin == nil {
+		return plugGo.StatusIdle
+	}
+	return e.plugin.Status()
+}
+
+// StatusNotify returns a read-only channel for receiving status change events.
+// Returns nil if plugin hasn't been created yet.
+func (e *Entry) StatusNotify() <-chan plugGo.StatusEvent {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	if e.plugin == nil {
+		return nil
+	}
+	return e.plugin.StatusNotify()
+}
+
 // RegisterEntry creates Entry instances from boot.yaml.
 // Supports multi-instance: each array element creates one instance.
 func RegisterEntry(raw []byte) map[string]plugGo.Entry {

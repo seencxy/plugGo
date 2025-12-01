@@ -63,6 +63,10 @@ func main() {
 	fmt.Println("=================================")
 	fmt.Println()
 
+	// Note: To monitor plugin status, you can access the plugin instance
+	// through your specific Entry implementation and call Status() or
+	// subscribe to StatusNotify() channel. See template/entry.go for example.
+
 	// Wait for shutdown signal and gracefully exit
 	boot.WaitForShutdownSig(context.Background())
 

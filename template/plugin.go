@@ -94,7 +94,12 @@ func (p *Plugin) Start() error {
 
 	// TODO: Add your startup logic here
 	// Example: start background workers, initialize connections, etc.
-	// If startup fails, update status to Error and return
+	//
+	// Example error handling:
+	// if err := p.initConnection(); err != nil {
+	//     p.updateStatus(plugGo.StatusError, err)
+	//     return fmt.Errorf("failed to initialize: %w", err)
+	// }
 
 	p.running = true
 	p.updateStatus(plugGo.StatusRunning, nil)
@@ -117,6 +122,13 @@ func (p *Plugin) Stop() error {
 
 	// TODO: Add your cleanup logic here
 	// Example: stop workers, close connections, etc.
+	//
+	// Example error handling:
+	// if err := p.cleanup(); err != nil {
+	//     p.logger.Error("Cleanup failed:", err)
+	//     p.updateStatus(plugGo.StatusError, err)
+	//     return fmt.Errorf("failed to cleanup: %w", err)
+	// }
 
 	p.running = false
 	p.updateStatus(plugGo.StatusStopped, nil)
