@@ -80,6 +80,10 @@ func (f *Factory) Create(instanceID string, cfg interface{}, logger plugGo.Logge
 		return nil, fmt.Errorf("invalid config type: expected *config.Config, got %T", cfg)
 	}
 
+	if logger == nil {
+		logger = plugGo.NewStandardLogger(fmt.Sprintf("%s-%s", PluginName, instanceID), plugGo.ParseLogLevel(announcementCfg.LogLevel))
+	}
+
 	// Create plugin instance
 	plugin := &Plugin{
 		id:         instanceID,

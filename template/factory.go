@@ -46,6 +46,22 @@ func (f *Factory) DefaultConfig() interface{} {
 	return cfg
 }
 
+// parseLogLevel converts string log level to plugGo.LogLevel.
+func parseLogLevel(level string) plugGo.LogLevel {
+	switch level {
+	case "trace":
+		return plugGo.TraceLevel
+	case "debug":
+		return plugGo.DebugLevel
+	case "warn":
+		return plugGo.WarnLevel
+	case "error":
+		return plugGo.ErrorLevel
+	default:
+		return plugGo.InfoLevel
+	}
+}
+
 // ValidateConfig validates the config.
 func (f *Factory) ValidateConfig(cfg interface{}) error {
 	c, ok := cfg.(*config.Config)
@@ -76,7 +92,7 @@ func (f *Factory) Create(id string, cfg interface{}, logger plugGo.Logger) (plug
 	}
 
 	if logger == nil {
-		logger = plugGo.NewStandardLogger(fmt.Sprintf(LoggerPrefix, id), plugGo.InfoLevel)
+		logger = plugGo.NewStandardLogger(fmt.Sprintf(LoggerPrefix, id), plugGo.ParseLogLevel(c.LogLevel))
 	}
 
 	return NewPlugin(id, c, logger), nil

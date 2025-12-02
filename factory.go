@@ -22,3 +22,18 @@ type PluginFactory interface {
 	//   - error: returns error if creation fails
 	Create(instanceID string, config interface{}, logger Logger) (Plugin, error)
 }
+
+func ParseLogLevel(level string) LogLevel {
+	switch level {
+	case "trace":
+		return TraceLevel
+	case "debug":
+		return DebugLevel
+	case "warn":
+		return WarnLevel
+	case "error":
+		return ErrorLevel
+	default:
+		return InfoLevel
+	}
+}
