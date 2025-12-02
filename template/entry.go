@@ -34,7 +34,7 @@ func (e *Entry) Bootstrap(ctx context.Context) {
 
 	// Create and start plugin
 	e.plugin = NewPlugin(e.name, e.cfg, e.logger)
-	if err := e.plugin.Start(); err != nil {
+	if err := e.plugin.Start(ctx); err != nil {
 		e.logger.Error(fmt.Sprintf("[%s] Failed to start: %v", e.name, err))
 		return
 	}
@@ -50,7 +50,7 @@ func (e *Entry) Interrupt(ctx context.Context) {
 
 	e.logger.Info(fmt.Sprintf("[%s] Interrupting...", e.name))
 
-	if err := e.plugin.Stop(); err != nil {
+	if err := e.plugin.Stop(ctx); err != nil {
 		e.logger.Error(fmt.Sprintf("[%s] Failed to stop: %v", e.name, err))
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -54,7 +55,7 @@ func main() {
 		return
 	}
 	fmt.Printf("  [OK] Instance created: %s\n", instance1.ID())
-	if err := instance1.Start(); err != nil {
+	if err := instance1.Start(context.Background()); err != nil {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
@@ -94,7 +95,7 @@ func main() {
 		return
 	}
 	fmt.Printf("  [OK] Instance created: %s\n", instance2.ID())
-	if err := instance2.Start(); err != nil {
+	if err := instance2.Start(context.Background()); err != nil {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
@@ -113,7 +114,7 @@ func main() {
 		return
 	}
 	fmt.Printf("  [OK] Instance created: %s\n", instance3.ID())
-	if err := instance3.Start(); err != nil {
+	if err := instance3.Start(context.Background()); err != nil {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
@@ -181,7 +182,7 @@ func main() {
 	fmt.Println("\n=== Shutting Down All Instances ===")
 	for _, inst := range allInstances {
 		fmt.Printf("Stopping instance: %s\n", inst.ID())
-		if err := inst.Stop(); err != nil {
+		if err := inst.Stop(context.Background()); err != nil {
 			fmt.Printf("  [FAIL] Stop failed: %v\n", err)
 		} else {
 			fmt.Println("  [OK] Stopped")

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -46,6 +47,10 @@ type Boot struct {
 	userEntries   map[string]map[string]Entry
 	logger        Logger
 	mu            sync.RWMutex
+
+	// Shutdown timeout configuration
+	shutdownTimeout      time.Duration
+	entryShutdownTimeout time.Duration
 }
 
 // NewBoot creates a new Boot instance.
@@ -58,13 +63,15 @@ func NewBoot(opts ...BootOption) *Boot {
 	}
 
 	boot := &Boot{
-		configPath:    cfg.ConfigPath,
-		configRaw:     cfg.ConfigRaw,
-		beforeHookF:   newHookFuncM(),
-		afterHookF:    newHookFuncM(),
-		pluginEntries: make(map[string]map[string]Entry),
-		userEntries:   make(map[string]map[string]Entry),
-		logger:        NewDefaultLogger("boot"),
+		configPath:           cfg.ConfigPath,
+		configRaw:            cfg.ConfigRaw,
+		beforeHookF:          newHookFuncM(),
+		afterHookF:           newHookFuncM(),
+		pluginEntries:        make(map[string]map[string]Entry),
+		userEntries:          make(map[string]map[string]Entry),
+		logger:               NewDefaultLogger("boot"),
+		shutdownTimeout:      cfg.ShutdownTimeout,
+		entryShutdownTimeout: cfg.EntryShutdownTimeout,
 	}
 
 	// Read config
@@ -153,14 +160,23 @@ func (b *Boot) WaitForShutdownSig(ctx context.Context) {
 
 // Shutdown shuts down all Entries.
 func (b *Boot) Shutdown(ctx context.Context) {
-	// Call shutdown hooks
+	// Create context with timeout (if not already set)
+	shutdownTimeout := 30 * time.Second
+	if b.shutdownTimeout > 0 {
+		shutdownTimeout = b.shutdownTimeout
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
+	// 1. Execute shutdown hooks
 	for name, hook := range GlobalAppCtx.ListShutdownHooks() {
 		b.logger.Info(fmt.Sprintf("Running shutdown hook: %s", name))
 		hook()
 	}
 
-	// Interrupt all Entries
-	b.interrupt(ctx)
+	// 2. Interrupt all Entries concurrently with timeout control
+	b.interruptWithContext(shutdownCtx)
 }
 
 // AddShutdownHookFunc adds a shutdown hook function.
@@ -168,24 +184,82 @@ func (b *Boot) AddShutdownHookFunc(name string, f ShutdownHook) {
 	GlobalAppCtx.AddShutdownHook(name, f)
 }
 
-// interrupt interrupts all Entries.
-func (b *Boot) interrupt(ctx context.Context) {
+// interruptWithContext interrupts all Entries concurrently with timeout control.
+func (b *Boot) interruptWithContext(ctx context.Context) {
 	defer b.syncLog()
 
-	// Interrupt user Entries (reverse order)
+	var wg sync.WaitGroup
+
+	// 1. Shutdown user Entries first (concurrent)
 	for entryType, byName := range b.userEntries {
 		for entryName, entry := range byName {
-			b.logger.Info(fmt.Sprintf("Interrupting [%s] %s", entryType, entryName))
-			entry.Interrupt(ctx)
+			wg.Add(1)
+			go func(et, en string, e Entry) {
+				defer wg.Done()
+				b.interruptSingleEntry(ctx, et, en, e)
+			}(entryType, entryName, entry)
 		}
 	}
 
-	// Interrupt plugin Entries (reverse order)
+	// Wait for user Entries to shutdown
+	b.waitWithTimeout(ctx, &wg, "user entries")
+
+	// 2. Then shutdown plugin Entries (concurrent)
+	wg = sync.WaitGroup{} // Reset
 	for entryType, byName := range b.pluginEntries {
 		for entryName, entry := range byName {
-			b.logger.Info(fmt.Sprintf("Interrupting [%s] %s", entryType, entryName))
-			entry.Interrupt(ctx)
+			wg.Add(1)
+			go func(et, en string, e Entry) {
+				defer wg.Done()
+				b.interruptSingleEntry(ctx, et, en, e)
+			}(entryType, entryName, entry)
 		}
+	}
+
+	// Wait for plugin Entries to shutdown
+	b.waitWithTimeout(ctx, &wg, "plugin entries")
+}
+
+// waitWithTimeout waits for all goroutines in WaitGroup or until context timeout.
+func (b *Boot) waitWithTimeout(ctx context.Context, wg *sync.WaitGroup, name string) {
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		b.logger.Info(fmt.Sprintf("All %s interrupted successfully", name))
+	case <-ctx.Done():
+		b.logger.Warn(fmt.Sprintf("Shutdown timeout exceeded for %s, forcing exit", name))
+	}
+}
+
+// interruptSingleEntry interrupts a single Entry with timeout control.
+func (b *Boot) interruptSingleEntry(ctx context.Context, entryType, entryName string, entry Entry) {
+	b.logger.Info(fmt.Sprintf("Interrupting [%s] %s", entryType, entryName))
+
+	// Create timeout context for this Entry (default 10s)
+	entryTimeout := 10 * time.Second
+	if b.entryShutdownTimeout > 0 {
+		entryTimeout = b.entryShutdownTimeout
+	}
+
+	entryCtx, cancel := context.WithTimeout(ctx, entryTimeout)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		entry.Interrupt(entryCtx)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		b.logger.Info(fmt.Sprintf("Interrupted [%s] %s", entryType, entryName))
+	case <-entryCtx.Done():
+		b.logger.Warn(fmt.Sprintf("Interrupt timeout [%s] %s", entryType, entryName))
 	}
 }
 

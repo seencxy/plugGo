@@ -1,6 +1,7 @@
 package plugGo
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -13,6 +14,7 @@ type PluginInstance struct {
 	plugin     Plugin        // Plugin instance
 	config     interface{}   // Current config
 	factory    PluginFactory // Factory that created this instance
+	notifyCh   chan any      // Optional external notification channel
 	mu         sync.RWMutex  // Protects concurrent access
 }
 
@@ -75,14 +77,14 @@ func (pi *PluginInstance) UpdateConfig(newConfig interface{}) error {
 	return nil
 }
 
-// Start starts the plugin.
-func (pi *PluginInstance) Start() error {
-	return pi.plugin.Start()
+// Start starts the plugin with context.
+func (pi *PluginInstance) Start(ctx context.Context) error {
+	return pi.plugin.Start(ctx)
 }
 
-// Stop stops the plugin.
-func (pi *PluginInstance) Stop() error {
-	return pi.plugin.Stop()
+// Stop stops the plugin with context.
+func (pi *PluginInstance) Stop(ctx context.Context) error {
+	return pi.plugin.Stop(ctx)
 }
 
 // GetLogger returns the logger.
@@ -103,4 +105,42 @@ func (pi *PluginInstance) Status() PluginStatus {
 // StatusNotify returns a read-only channel for receiving status change events.
 func (pi *PluginInstance) StatusNotify() <-chan StatusEvent {
 	return pi.plugin.StatusNotify()
+}
+
+// SetNotifyChannel sets the external notification channel.
+// This channel can be used for external systems to receive notifications from the plugin.
+// The channel is optional and can be nil.
+func (pi *PluginInstance) SetNotifyChannel(ch chan any) {
+	pi.mu.Lock()
+	defer pi.mu.Unlock()
+	pi.notifyCh = ch
+}
+
+// GetNotifyChannel returns the external notification channel.
+// Returns nil if no channel has been set.
+func (pi *PluginInstance) GetNotifyChannel() chan any {
+	pi.mu.RLock()
+	defer pi.mu.RUnlock()
+	return pi.notifyCh
+}
+
+// Notify sends a message to the external notification channel (non-blocking).
+// Returns true if the message was sent, false if the channel is nil or full.
+// This method is safe to call even if no notification channel is set.
+func (pi *PluginInstance) Notify(msg any) bool {
+	pi.mu.RLock()
+	ch := pi.notifyCh
+	pi.mu.RUnlock()
+
+	if ch == nil {
+		return false
+	}
+
+	select {
+	case ch <- msg:
+		return true
+	default:
+		// Channel is full, skip message
+		return false
+	}
 }

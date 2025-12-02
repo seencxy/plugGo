@@ -1,8 +1,10 @@
 package announcement
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/seencxy/plugGo"
 	"github.com/seencxy/plugGo/example/announcement/config"
@@ -63,8 +65,8 @@ func (p *Plugin) updateStatus(newStatus plugGo.PluginStatus, err error) {
 	}
 }
 
-// Start starts the plugin.
-func (p *Plugin) Start() error {
+// Start starts the plugin with context.
+func (p *Plugin) Start(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -86,13 +88,22 @@ func (p *Plugin) Start() error {
 	return nil
 }
 
-// Stop stops the plugin.
-func (p *Plugin) Stop() error {
+// Stop stops the plugin with context.
+func (p *Plugin) Stop(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	if p.monitor != nil {
-		if err := p.monitor.Stop(); err != nil {
+		// Extract timeout from context
+		timeout := 5 * time.Second
+		if deadline, ok := ctx.Deadline(); ok {
+			timeout = time.Until(deadline)
+			if timeout < 0 {
+				timeout = time.Second // At least 1 second
+			}
+		}
+
+		if err := p.monitor.StopWithTimeout(timeout); err != nil {
 			p.logger.Error("Failed to stop monitor:", err)
 			p.updateStatus(plugGo.StatusError, err)
 			return fmt.Errorf("failed to stop monitor: %w", err)

@@ -1,6 +1,9 @@
 package plugGo
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Entry is the base interface for all bootable components.
 // Inspired by rk-boot design, Entry represents a service/component that can be bootstrapped from YAML config.
@@ -48,6 +51,10 @@ type BootConfig struct {
 	ConfigPath string
 	// ConfigRaw is the raw config content (takes precedence over file).
 	ConfigRaw []byte
+	// ShutdownTimeout is the overall shutdown timeout, defaults to 30s.
+	ShutdownTimeout time.Duration
+	// EntryShutdownTimeout is the timeout for shutting down a single Entry, defaults to 10s.
+	EntryShutdownTimeout time.Duration
 }
 
 // BootOption is a bootstrap configuration option function.
@@ -64,5 +71,19 @@ func WithConfigPath(path string) BootOption {
 func WithConfigRaw(raw []byte) BootOption {
 	return func(c *BootConfig) {
 		c.ConfigRaw = raw
+	}
+}
+
+// WithShutdownTimeout sets the overall shutdown timeout.
+func WithShutdownTimeout(timeout time.Duration) BootOption {
+	return func(c *BootConfig) {
+		c.ShutdownTimeout = timeout
+	}
+}
+
+// WithEntryShutdownTimeout sets the timeout for shutting down a single Entry.
+func WithEntryShutdownTimeout(timeout time.Duration) BootOption {
+	return func(c *BootConfig) {
+		c.EntryShutdownTimeout = timeout
 	}
 }

@@ -1,8 +1,10 @@
 package template
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/seencxy/plugGo"
 	"github.com/seencxy/plugGo/template/config"
@@ -76,8 +78,8 @@ func (p *Plugin) updateStatus(newStatus plugGo.PluginStatus, err error) {
 	}
 }
 
-// Start starts the plugin.
-func (p *Plugin) Start() error {
+// Start starts the plugin with context.
+func (p *Plugin) Start(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -106,8 +108,8 @@ func (p *Plugin) Start() error {
 	return nil
 }
 
-// Stop stops the plugin.
-func (p *Plugin) Stop() error {
+// Stop stops the plugin with context.
+func (p *Plugin) Stop(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -117,11 +119,36 @@ func (p *Plugin) Stop() error {
 
 	p.logger.Info("Stopping plugin...")
 
+	// Extract timeout from context (if available)
+	timeout := 5 * time.Second
+	if deadline, ok := ctx.Deadline(); ok {
+		timeout = time.Until(deadline)
+		if timeout < 0 {
+			timeout = time.Second // At least 1 second
+		}
+	}
+	p.logger.Info(fmt.Sprintf("Stopping with timeout: %v", timeout))
+
 	// Signal stop
 	close(p.stopCh)
 
 	// TODO: Add your cleanup logic here
-	// Example: stop workers, close connections, etc.
+	// Example: stop workers with WaitGroup, close connections, etc.
+	//
+	// Example with timeout:
+	// done := make(chan struct{})
+	// go func() {
+	//     p.wg.Wait()  // Wait for all workers to finish
+	//     close(done)
+	// }()
+	//
+	// select {
+	// case <-done:
+	//     p.logger.Info("All workers stopped")
+	// case <-time.After(timeout):
+	//     p.logger.Warn("Stop timeout, some workers may still be running")
+	//     return fmt.Errorf("stop timeout")
+	// }
 	//
 	// Example error handling:
 	// if err := p.cleanup(); err != nil {

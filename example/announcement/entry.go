@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/seencxy/plugGo"
 	plugGoConfig "github.com/seencxy/plugGo/config"
@@ -63,7 +64,16 @@ func (e *AnnouncementEntry) Interrupt(ctx context.Context) {
 	e.logger.Info(fmt.Sprintf("[%s] Interrupting announcement entry...", e.name))
 
 	if e.monitor != nil {
-		if err := e.monitor.Stop(); err != nil {
+		// Extract timeout from context
+		timeout := 5 * time.Second
+		if deadline, ok := ctx.Deadline(); ok {
+			timeout = time.Until(deadline)
+			if timeout < 0 {
+				timeout = time.Second // At least 1 second
+			}
+		}
+
+		if err := e.monitor.StopWithTimeout(timeout); err != nil {
 			e.logger.Error(fmt.Sprintf("[%s] Failed to stop monitor: %v", e.name, err))
 		}
 		e.monitor = nil

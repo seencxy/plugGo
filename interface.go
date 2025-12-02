@@ -1,5 +1,7 @@
 package plugGo
 
+import "context"
+
 // PluginStatus represents the status of a plugin.
 type PluginStatus int
 
@@ -39,10 +41,10 @@ type StatusEvent struct {
 }
 
 type Application interface {
-	// Start starts the application.
-	Start() error
-	// Stop stops the application.
-	Stop() error
+	// Start starts the application with context for timeout and cancellation control.
+	Start(ctx context.Context) error
+	// Stop stops the application with context for graceful shutdown timeout control.
+	Stop(ctx context.Context) error
 	// GetLogger returns the application's logger.
 	GetLogger() Logger
 	// SetLogger sets the application's logger.
