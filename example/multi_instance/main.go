@@ -17,7 +17,8 @@ import (
 )
 
 func main() {
-	fmt.Println("=== PlugGo Multi-Instance Example ===\n")
+	fmt.Println("=== PlugGo Multi-Instance Example ===")
+	fmt.Println()
 
 	// List all registered plugin factories
 	factories := registry.GetAllFactories()
@@ -59,7 +60,8 @@ func main() {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
-	fmt.Println("  [OK] Instance started\n")
+	fmt.Println("  [OK] Instance started")
+	fmt.Println()
 
 	// Instance 2: Monitor tech blogs
 	fmt.Println("Creating instance 2: Tech Blog Monitor")
@@ -99,7 +101,8 @@ func main() {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
-	fmt.Println("  [OK] Instance started\n")
+	fmt.Println("  [OK] Instance started")
+	fmt.Println()
 
 	// Instance 3: Use default config
 	fmt.Println("Creating instance 3: Using default config")
@@ -118,7 +121,8 @@ func main() {
 		fmt.Printf("  [FAIL] Start failed: %v\n", err)
 		return
 	}
-	fmt.Println("  [OK] Instance started\n")
+	fmt.Println("  [OK] Instance started")
+	fmt.Println()
 
 	// Display all running instances
 	fmt.Println("=== Running Instances ===")

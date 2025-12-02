@@ -20,6 +20,7 @@ type Plugin struct {
 	monitor    *Monitor                // Monitor
 	status     plugGo.PluginStatus     // Current status
 	statusCh   chan plugGo.StatusEvent // Status notification channel
+	notifyCh   chan any                // External notification channel
 	mu         sync.RWMutex            // Protects concurrent access
 }
 
@@ -48,6 +49,12 @@ func (p *Plugin) Status() plugGo.PluginStatus {
 // StatusNotify returns a read-only channel for receiving status change events.
 func (p *Plugin) StatusNotify() <-chan plugGo.StatusEvent {
 	return p.statusCh
+}
+
+// GetNotifyChannel returns the plugin's notification channel.
+// Returns nil if the plugin doesn't support external notifications.
+func (p *Plugin) GetNotifyChannel() chan any {
+	return p.notifyCh
 }
 
 // updateStatus updates the plugin status and sends notification.

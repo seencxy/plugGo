@@ -55,6 +55,10 @@ type Application interface {
 	// The channel will receive StatusEvent when the plugin status changes.
 	// Note: Subscribers should not block on this channel to avoid missing events.
 	StatusNotify() <-chan StatusEvent
+	// GetNotifyChannel returns the external notification channel for custom messages.
+	// Plugins can use this channel to send custom notifications to external systems.
+	// Returns nil if the plugin doesn't support external notifications.
+	GetNotifyChannel() chan any
 }
 
 type Logger interface {

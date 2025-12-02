@@ -88,6 +88,7 @@ func (f *Factory) Create(instanceID string, cfg interface{}, logger plugGo.Logge
 		logger:     logger,
 		status:     plugGo.StatusIdle,
 		statusCh:   make(chan plugGo.StatusEvent, 10), // buffered channel to avoid blocking
+		notifyCh:   make(chan any, 100),               // buffered channel for external notifications
 	}
 
 	return plugin, nil

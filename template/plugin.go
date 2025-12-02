@@ -20,6 +20,7 @@ type Plugin struct {
 	stopCh     chan struct{}
 	status     plugGo.PluginStatus
 	statusCh   chan plugGo.StatusEvent
+	notifyCh   chan any // External notification channel
 	mu         sync.RWMutex
 }
 
@@ -33,6 +34,7 @@ func NewPlugin(id string, cfg *config.Config, logger plugGo.Logger) *Plugin {
 		stopCh:     make(chan struct{}),
 		status:     plugGo.StatusIdle,
 		statusCh:   make(chan plugGo.StatusEvent, 10), // buffered channel to avoid blocking
+		notifyCh:   make(chan any, 100),               // buffered channel for external notifications
 	}
 }
 
@@ -61,6 +63,12 @@ func (p *Plugin) Status() plugGo.PluginStatus {
 // StatusNotify returns a read-only channel for receiving status change events.
 func (p *Plugin) StatusNotify() <-chan plugGo.StatusEvent {
 	return p.statusCh
+}
+
+// GetNotifyChannel returns the plugin's notification channel.
+// Returns nil if the plugin doesn't support external notifications.
+func (p *Plugin) GetNotifyChannel() chan any {
+	return p.notifyCh
 }
 
 // updateStatus updates the plugin status and sends notification.
